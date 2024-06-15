@@ -79,7 +79,7 @@ void TimeBasedCover::control(const CoverCall &call) {
   }
   if (call.get_position().has_value()) {
     auto pos = *call.get_position();
-    if (!this->has_built_in_endstop_) { // drive against end, to help stay in calibration
+    if (!this->has_built_in_endstop_) {  // drive against end, to help stay in calibration
       if (this->position == COVER_OPEN && millis() > this->at_target_time_ + this->open_duration_) {
         this->position -= 0.05;
       } else if (this->position == COVER_CLOSED && millis() > this->at_target_time_ + this->close_duration_) {
@@ -104,6 +104,9 @@ void TimeBasedCover::control(const CoverCall &call) {
       }
     } else {
       auto op = pos < this->position ? COVER_OPERATION_CLOSING : COVER_OPERATION_OPENING;
+      if (this->manual_control_ && (pos == COVER_OPEN || pos == COVER_CLOSED)) {
+        this->position = pos == COVER_CLOSED ? COVER_OPEN : COVER_CLOSED;
+      }
       this->target_position_ = pos;
       this->start_direction_(op);
     }
@@ -137,12 +140,14 @@ void TimeBasedCover::start_direction_(CoverOperation dir) {
       trig = this->stop_trigger_;
       break;
     case COVER_OPERATION_OPENING:
-      if ((int)(this->target_position_ * 100) <= this->position * 100) return;  
+      if ((int) (this->target_position_ * 100) <= this->position * 100)
+        return;
       this->last_operation_ = dir;
       trig = this->open_trigger_;
       break;
     case COVER_OPERATION_CLOSING:
-      if ((int)(this->target_position_ * 100) + 1 >= this->position * 100) return;  
+      if ((int) (this->target_position_ * 100) + 1 >= this->position * 100)
+        return;
       this->last_operation_ = dir;
       trig = this->close_trigger_;
       break;
